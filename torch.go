@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"torch/proc"
 	"torch/utils"
 
 	"github.com/akamensky/argparse"
@@ -41,8 +42,9 @@ func main() {
 		fmt.Print(parser.Usage(err))
 	}
 
-	conf := utils.ParseConf(javpath, jarfile, jvmargs, interval)
+	conf := utils.ParseArgs(javpath, jarfile, jvmargs, interval)
 
-	fmt.Printf("%v", conf.Interval)
-	// proc.Hook(conf.JavPath, conf.JarFile, conf.WorkDir, conf.JvmArgs)
+	// print(conf.JavPath)
+	// fmt.Printf("%v, %v, %v", conf.JvmArgs, conf.Interval, conf.WorkDir)
+	proc.Hook(conf)
 }

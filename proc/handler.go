@@ -3,9 +3,12 @@ package proc
 import (
 	"os"
 	"os/exec"
+	"torch/utils"
 )
 
 var javpath string
+
+// Config Redifine config
 
 func execErr(err error) {
 	if err != nil {
@@ -13,23 +16,21 @@ func execErr(err error) {
 	}
 }
 
-func build(javpath string, jarfile string, workdir string, args []string) (cmd *exec.Cmd) {
+func build(conf *utils.Config) (cmd *exec.Cmd) {
 
 	if javpath == "java" {
 		javpath, _ = exec.LookPath("java")
 	}
 
-	s := []string{javpath + "-jar" + jarfile}
-
-	var jvmargs []string = append(s, args...)
+	var args []string = utils.Unpack(conf)
 
 	cmd = &exec.Cmd{
-		Path:   javpath,
-		Args:   jvmargs,
+		Path:   conf.JavPath,
+		Args:   args,
 		Stdout: os.Stdout,
 		Stdin:  os.Stdin,
 		Stderr: os.Stderr,
-		Dir:    workdir,
+		Dir:    conf.WorkDir,
 	}
 
 	return cmd
@@ -40,7 +41,8 @@ func inject(args ...[]string) {
 }
 
 // Hook starts JVM instance and reads stdout
-func Hook(javpath string, jarfile string, workdir string, args []string) {
-	cmd := build(javpath, jarfile, workdir, args)
+func Hook(conf *utils.Config) {
+
+	cmd := build(conf)
 	cmd.Run()
 }

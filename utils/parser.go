@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -20,8 +20,8 @@ type Config struct {
 	Interval int64
 }
 
-//ParseConf reads config file and returns reference to Config structure. Parameters are used to overwrite file values with command line args.
-func ParseConf(jp, jf *string, ja *[]string, i *int) *Config {
+//ParseArgs reads config file and returns reference to Config structure. Parameters are used to overwrite file values with command line args.
+func ParseArgs(jp, jf *string, ja *[]string, i *int) *Config {
 
 	f, err := os.Open("torch.conf")
 	if err != nil {
@@ -45,18 +45,21 @@ func ParseConf(jp, jf *string, ja *[]string, i *int) *Config {
 			} else {
 				conf.JavPath = splitPref(t)[1]
 			}
+
 		case strings.HasPrefix(t, "server_jar"):
-			if jf != nil {
+			if len(*jf) > 0 {
 				conf.JarFile = *jf
 			} else {
 				conf.JarFile = splitPref(t)[1]
 			}
+
 		case strings.HasPrefix(t, "java_args"):
-			if ja != nil {
+			if len(*ja) > 0 {
 				conf.JvmArgs = *ja
 			} else {
 				conf.JvmArgs = splitPref(t)
 			}
+
 		case strings.HasPrefix(t, "reboot_interval"):
 			if *i != 0 {
 				conf.Interval = int64(*i)
@@ -66,8 +69,7 @@ func ParseConf(jp, jf *string, ja *[]string, i *int) *Config {
 		}
 	}
 
-	fmt.Printf("%v", conf.JarFile)
-	conf.WorkDir, err = ParseWorkingDir(conf.JarFile)
+	conf.WorkDir, err = parseWorkingDir(conf.JarFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v", err)
 	}
@@ -75,12 +77,23 @@ func ParseConf(jp, jf *string, ja *[]string, i *int) *Config {
 	return conf
 }
 
-func splitPref(s string) (slice []string) {
-	return strings.Split(s, " = ")
+// Unpack takes Config struct and returns slice representing the complete JVM argument list.
+func Unpack(c *Config) (args []string) {
+	v := reflect.ValueOf(c)
+	for i := 0; i < v.NumField(); i++ {
+		if i == 1 {
+			args = append(args, "\x2d\x6a\x61\x72")
+		} else {
+			f := v.Field(i)
+			s := f.String()
+			args = append(args, s)
+		}
+	}
+	return args
 }
 
 // ParseWorkingDir returns the working directory of the server jar file.
-func ParseWorkingDir(path string) (string, error) {
+func parseWorkingDir(path string) (string, error) {
 
 	var err error
 	var p string = filepath.Dir(path)
@@ -93,12 +106,6 @@ func ParseWorkingDir(path string) (string, error) {
 	return p, err
 }
 
-// ReadArgsFile reads a file containing the JVM arguments to start server. Returns byte array containing JVM command.
-func ReadArgsFile(path string) (jvmArgs []byte) {
-
-	jvmArgs, err := ioutil.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
-	return jvmArgs
+func splitPref(s string) (slice []string) {
+	return strings.Split(s, " = ")
 }
