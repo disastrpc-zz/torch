@@ -77,9 +77,10 @@ func ParseArgs(jp, jf *string, ja *[]string, i *int) *Config {
 	return conf
 }
 
-// Unpack takes Config struct and returns slice representing the complete JVM argument list.
+// Unpack takes Config struct and uses reflection to return a
+// slice representing the complete JVM argument list.
 func Unpack(c *Config) (args []string) {
-	v := reflect.ValueOf(c)
+	v := reflect.ValueOf(*c)
 	for i := 0; i < v.NumField(); i++ {
 		if i == 1 {
 			args = append(args, "\x2d\x6a\x61\x72")
