@@ -46,5 +46,7 @@ func main() {
 
 	// print(conf.JavPath)
 	// fmt.Printf("%v, %v, %v", conf.JvmArgs, conf.Interval, conf.WorkDir)
-	proc.Hook(conf)
+	for {
+		proc.Hook(conf)
+	}
 }

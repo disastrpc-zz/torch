@@ -82,11 +82,24 @@ func ParseArgs(jp, jf *string, ja *[]string, i *int) *Config {
 func Unpack(c *Config) (args []string) {
 	v := reflect.ValueOf(*c)
 	for i := 0; i < v.NumField(); i++ {
+		s := v.Field(i).String()
+
 		if i == 1 {
 			args = append(args, "\x2d\x6a\x61\x72")
+			args = append(args, s)
+
+			// Skip Interval and WorkDir fields
+		} else if v.Type().Field(i).Name == "\x57\x6f\x72\x6b\x44\x69\x72" ||
+			v.Type().Field(i).Name == "\x49\x6e\x74\x65\x72\x76\x61\x6c" {
+			continue
+
+		} else if v.Type().Field(i).Name == "\x4a\x76\x6d\x41\x72\x67\x73" {
+
+			for a := 1; a < len(c.JvmArgs); a++ {
+				args = append(args, c.JvmArgs[a])
+			}
+
 		} else {
-			f := v.Field(i)
-			s := f.String()
 			args = append(args, s)
 		}
 	}
