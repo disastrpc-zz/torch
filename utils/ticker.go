@@ -5,7 +5,7 @@
 // warninterval = interval / warn count
 // ex: for an interval of 7200 and a count of 3 the warn interval would be 2400 seconds
 // time to restart = start time + interval
-// time to warn = (warninterval * warn count) + current timepackage utils
+// time to warn = (warninterval * warn count) + current UNIX time
 
 // WIP !!
 
