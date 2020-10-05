@@ -42,11 +42,11 @@ func main() {
 		fmt.Print(parser.Usage(err))
 	}
 
-	conf := utils.ParseArgs(javpath, jarfile, jvmargs, interval)
+	conf := utils.ParseConfig(javpath, jarfile, jvmargs, interval)
 
-	// print(conf.JavPath)
-	// fmt.Printf("%v, %v, %v", conf.JvmArgs, conf.Interval, conf.WorkDir)
-	for {
-		proc.Hook(conf)
-	}
+	fmt.Println(utils.Banner(conf))
+	fmt.Printf("%v %v Starting JVM...\n", utils.Constamp, utils.Timestamp())
+
+	proc.Hook(conf)
+
 }

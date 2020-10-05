@@ -1,86 +1,56 @@
 package utils
 
 import (
-	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
-	"strconv"
 	"strings"
 )
 
 // Config represents the configuration settings for Torch.
 type Config struct {
-	JavPath  string
-	JarFile  string
-	JvmArgs  []string
-	WorkDir  string
-	Interval int64
+	JavPath   string
+	JarFile   string
+	JvmArgs   []string
+	Interval  int64
+	WarnCount int64
+	WarnMsg   string
+	RebootMsg string
 }
 
 //ParseArgs reads config file and returns reference to Config structure. Parameters are used to overwrite file values with command line args.
-func ParseArgs(jp, jf *string, ja *[]string, i *int) *Config {
+func ParseConfig(jp, jf *string, ja *[]string, i *int) *Config {
 
-	f, err := os.Open("torch.conf")
+	data, err := ioutil.ReadFile("torch.conf")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "unable to open config file. %v", err)
 	}
-	defer f.Close()
 
-	conf := new(Config)
-	scanner := bufio.NewScanner(f)
+	var conf Config
 
-	for scanner.Scan() {
-		t := strings.Trim(scanner.Text(), "\x0a\x0b\x09\x20\x0d")
-		switch {
-		case strings.HasPrefix(t, "\x2f\x2f"):
-			// Ignores comment lines
-		case strings.HasPrefix(t, "java_path"):
-			if *jp != "java" {
-				conf.JavPath = *jp
-			} else if a := splitPref(t)[1]; a == "java" {
-				conf.JavPath = "java"
-			} else {
-				conf.JavPath = splitPref(t)[1]
-			}
-
-		case strings.HasPrefix(t, "server_jar"):
-			if len(*jf) > 0 {
-				conf.JarFile = *jf
-			} else {
-				conf.JarFile = splitPref(t)[1]
-			}
-
-		case strings.HasPrefix(t, "java_args"):
-			if len(*ja) > 0 {
-				conf.JvmArgs = *ja
-			} else {
-				conf.JvmArgs = splitPref(t)
-			}
-
-		case strings.HasPrefix(t, "reboot_interval"):
-			if *i != 0 {
-				conf.Interval = int64(*i)
-			} else {
-				conf.Interval, err = strconv.ParseInt(splitPref(t)[1], 10, 32)
-			}
-		}
+	err = json.Unmarshal(data, &conf)
+	if err != nil {
+		panic(err)
 	}
 
-	conf.WorkDir, err = parseWorkingDir(conf.JarFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v", err)
 	}
 
-	return conf
+	return &conf
 }
 
 // Unpack takes Config struct and uses reflection to return a
 // slice representing the complete JVM argument list.
 func Unpack(c *Config) (args []string) {
 	v := reflect.ValueOf(*c)
+
+	args = append(args, c.JavPath)
+
 	for i := 0; i < v.NumField(); i++ {
 		s := v.Field(i).String()
 
@@ -88,26 +58,22 @@ func Unpack(c *Config) (args []string) {
 			args = append(args, "\x2d\x6a\x61\x72")
 			args = append(args, s)
 
-			// Skip Interval and WorkDir fields
-		} else if v.Type().Field(i).Name == "\x57\x6f\x72\x6b\x44\x69\x72" ||
-			v.Type().Field(i).Name == "\x49\x6e\x74\x65\x72\x76\x61\x6c" {
-			continue
-
-		} else if v.Type().Field(i).Name == "\x4a\x76\x6d\x41\x72\x67\x73" {
-
-			for a := 1; a < len(c.JvmArgs); a++ {
-				args = append(args, c.JvmArgs[a])
-			}
-
 		} else {
-			args = append(args, s)
+			switch {
+			case v.Type().Field(i).Name == "JarFile":
+				args = append(args, s)
+			case v.Type().Field(i).Name == "JvmArgs":
+				for a := 0; a < len(c.JvmArgs); a++ {
+					args = append(args, c.JvmArgs[a])
+				}
+			}
 		}
 	}
 	return args
 }
 
 // ParseWorkingDir returns the working directory of the server jar file.
-func parseWorkingDir(path string) (string, error) {
+func ParseWorkingDir(path string) (string, error) {
 
 	var err error
 	var p string = filepath.Dir(path)

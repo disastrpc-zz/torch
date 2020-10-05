@@ -17,12 +17,16 @@ func build(conf *utils.Config) (cmd *exec.Cmd) {
 		conf.JavPath, _ = exec.LookPath("java")
 	}
 
-	var args []string = utils.Unpack(conf)
+	workDir, err := utils.ParseWorkingDir(conf.JarFile)
+	args := utils.Unpack(conf)
+	if err != nil {
+		panic(err)
+	}
 
 	cmd = &exec.Cmd{
 		Path: conf.JavPath,
 		Args: args,
-		Dir:  conf.WorkDir,
+		Dir:  workDir,
 	}
 
 	return cmd
@@ -31,9 +35,11 @@ func build(conf *utils.Config) (cmd *exec.Cmd) {
 // Hook starts JVM instance
 func Hook(conf *utils.Config) {
 
-	cmd := build(conf)
-	Listen(cmd, conf.Interval)
-	err := cmd.Start()
-	execErr(err)
-	cmd.Wait()
+	for {
+		cmd := build(conf)
+		Listen(cmd, conf.Interval, conf.WarnCount)
+		err := cmd.Start()
+		execErr(err)
+		cmd.Wait()
+	}
 }
