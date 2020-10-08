@@ -11,26 +11,22 @@ import (
 )
 
 // Listen takes pointer to process struct and listens on standard pipes, and on channels comming from ticker
-func Listen(cmd *exec.Cmd, interval int, msgInterval int) {
-
-	stdout, err := cmd.StdoutPipe()
+func Listen(cmd *exec.Cmd,
+	interval int,
+	msgInterval int,
+	Con chan<- string,
+	Stat chan<- int,
+	reader io.Reader) {
 
 	Time := make(chan int, msgInterval)
 	Flag := make(chan int, msgInterval)
 
-	if err != nil {
-		panic(err)
-	}
+	stdout, err := cmd.StdoutPipe()
 
-	stdin, err := cmd.StdinPipe()
+	go func(reader io.Reader,
+		Flag, Time chan int,
+		Con chan<- string) {
 
-	if err != nil {
-		panic(err)
-	}
-
-	reader := bufio.NewReader(stdout)
-
-	go func(reader io.Reader, Flag, Time chan int) {
 		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
 
@@ -40,20 +36,22 @@ func Listen(cmd *exec.Cmd, interval int, msgInterval int) {
 				InitTicker(interval, msgInterval, Flag, Time)
 			}
 
-			fmt.Println(scanner.Text())
+			Con <- scanner.Text()
 		}
-	}(reader, Flag, Time)
+	}(reader, Flag, Time, Con)
 
-	go func(interval, msgInterval int, Flag, Time chan int, stdin io.WriteCloser) {
+	go func(interval, msgInterval int,
+		Flag, Time chan int,
+		Stat chan<- int) {
+
 		for {
 			select {
 			case F := <-Flag:
 				if F == 1 {
 					T := <-Time
-					msg := utils.FormatWarn(T)
-					stdin.Write(msg)
+					Stat <- 1
 				} else if F == 2 {
-					stdin.Write([]byte("\x73\x74\x6f\x70\n"))
+					Stat <- 2
 					close(Flag)
 					close(Time)
 				}
@@ -62,5 +60,5 @@ func Listen(cmd *exec.Cmd, interval int, msgInterval int) {
 			}
 			time.Sleep(1 * time.Second)
 		}
-	}(interval, msgInterval, Flag, Time, stdin)
+	}(interval, msgInterval, Flag, Time, Stat)
 }

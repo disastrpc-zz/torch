@@ -1,3 +1,5 @@
+// Use struct of channels or a channel transmitting an interface to communicate server status to handler
+
 package main
 
 import (
