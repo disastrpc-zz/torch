@@ -45,7 +45,8 @@ func main() {
 	conf := utils.ParseConfig(javpath, jarfile, jvmargs, interval)
 
 	fmt.Println(utils.Banner(conf))
-	fmt.Printf("%v %v Starting JVM...\n", utils.Constamp, utils.Timestamp())
+	msg := utils.FormatLog("Starting JVM")
+	fmt.Print(msg)
 
 	proc.Hook(conf)
 

@@ -11,6 +11,7 @@ func execErr(err error) {
 	}
 }
 
+// build conf struct by unmarshaling json config
 func build(conf *utils.Config) (cmd *exec.Cmd) {
 
 	if conf.JavPath == "java" {

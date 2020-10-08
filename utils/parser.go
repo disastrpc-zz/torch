@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 )
 
 // Config represents the configuration settings for Torch.
@@ -16,21 +16,26 @@ type Config struct {
 	JavPath   string
 	JarFile   string
 	JvmArgs   []string
-	Interval  int64
-	WarnCount int64
+	Interval  int
+	WarnCount int
 	WarnMsg   string
 	RebootMsg string
 }
 
-//ParseArgs reads config file and returns reference to Config structure. Parameters are used to overwrite file values with command line args.
+//ParseConfig reads config file and returns reference to Config structure. Parameters are used to overwrite file values with command line args.
 func ParseConfig(jp, jf *string, ja *[]string, i *int) *Config {
 
+	var conf Config
 	data, err := ioutil.ReadFile("torch.conf")
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "unable to open config file. %v", err)
 	}
 
-	var conf Config
+	// Ensure input data doesn't contain \ escapes before getting unmarshaled
+	if bytes.Contains(data, []byte("\x5c")) {
+		data = bytes.Replace(data, []byte("\x5c"), []byte("\x5c\x5c"), -1)
+	}
 
 	err = json.Unmarshal(data, &conf)
 	if err != nil {
@@ -84,8 +89,4 @@ func ParseWorkingDir(path string) (string, error) {
 	}
 
 	return p, err
-}
-
-func splitPref(s string) (slice []string) {
-	return strings.Split(s, " = ")
 }

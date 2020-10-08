@@ -11,8 +11,12 @@ import (
 )
 
 // Listen takes pointer to process struct and listens on standard pipes, and on channels comming from ticker
-func Listen(cmd *exec.Cmd, interval int64, msgInterval int64) {
+func Listen(cmd *exec.Cmd, interval int, msgInterval int) {
+
 	stdout, err := cmd.StdoutPipe()
+
+	Time := make(chan int, msgInterval)
+	Flag := make(chan int, msgInterval)
 
 	if err != nil {
 		panic(err)
@@ -26,36 +30,37 @@ func Listen(cmd *exec.Cmd, interval int64, msgInterval int64) {
 
 	reader := bufio.NewReader(stdout)
 
-	go func(reader io.Reader) {
+	go func(reader io.Reader, Flag, Time chan int) {
 		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
 
 			if strings.Contains(scanner.Text(), "For help, type") {
-				stdin.Write([]byte("say stdin test\n"))
-				utils.InitTicker(interval, msgInterval, stdin)
-				listenChans(stdin)
+				msg := utils.FormatLog("Started Torch ticker")
+				fmt.Print(msg)
+				InitTicker(interval, msgInterval, Flag, Time)
 			}
 
-			fmt.Printf("%v %s\n", utils.Constamp, scanner.Text())
-
+			fmt.Println(scanner.Text())
 		}
-	}(reader)
-}
+	}(reader, Flag, Time)
 
-func listenChans(stdin io.WriteCloser) {
-
-	var Time chan int = make(chan int)
-	var Flag chan int = make(chan int)
-
-	select {
-	case Flag <- 2:
-		fmt.Println("HERE IN FLAG2")
-		message := fmt.Sprintf("say [Torch] server is restarting in %d minutes\n", <-Time)
-		stdin.Write([]byte(message))
-	case Flag <- 1:
-		fmt.Println("HERE IN FLAG1")
-		stdin.Write([]byte("say [Torch] server is restarting in 30 seconds\n"))
-		time.Sleep(30 * time.Second)
-		stdin.Write([]byte("stop\n"))
-	}
+	go func(interval, msgInterval int, Flag, Time chan int, stdin io.WriteCloser) {
+		for {
+			select {
+			case F := <-Flag:
+				if F == 1 {
+					T := <-Time
+					msg := utils.FormatWarn(T)
+					stdin.Write(msg)
+				} else if F == 2 {
+					stdin.Write([]byte("\x73\x74\x6f\x70\n"))
+					close(Flag)
+					close(Time)
+				}
+			default:
+				continue
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}(interval, msgInterval, Flag, Time, stdin)
 }
