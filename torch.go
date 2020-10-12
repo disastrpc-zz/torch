@@ -18,19 +18,19 @@ func main() {
 		&argparse.Options{
 			Required: false,
 			Help:     "Java arguments to execute",
-			Default:  "java",
+			Default:  "",
 		})
 	var jarfile *string = parser.String("J", "server-jar",
 		&argparse.Options{
 			Required: false,
 			Help:     "Provide path to server jar file",
-			Default:  nil,
+			Default:  "",
 		})
 	var jvmargs *[]string = parser.List("a", "jvm-args",
 		&argparse.Options{
 			Required: false,
 			Help:     "Provide JVM arguments that server-jar will execute",
-			Default:  nil,
+			Default:  []string{},
 		})
 	var interval *int = parser.Int("i", "interval",
 		&argparse.Options{
@@ -44,12 +44,17 @@ func main() {
 		fmt.Print(parser.Usage(err))
 	}
 
-	conf := utils.ParseConfig(javpath, jarfile, jvmargs, interval)
+	conf := utils.ParseConfig(javpath,
+		jarfile,
+		jvmargs,
+		interval)
 
 	fmt.Println(utils.Banner(conf))
 	msg := utils.FormatLog("Starting JVM")
 	fmt.Print(msg)
 
-	proc.Hook(conf)
+	for {
+		proc.Hook(conf)
+	}
 
 }

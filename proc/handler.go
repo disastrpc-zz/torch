@@ -3,7 +3,9 @@ package proc
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os/exec"
+	"strings"
 	"time"
 	"torch/utils"
 
@@ -12,10 +14,12 @@ import (
 
 const refreshInterval = 1 * time.Second
 
-// Status Represents server restart status
-type Status struct {
-	T    int
-	Flag int
+type procHook struct {
+	cmd    *exec.Cmd
+	stdin  io.WriteCloser
+	stdout io.ReadCloser
+	reader io.Reader
+	conf   utils.Config
 }
 
 var (
@@ -29,7 +33,6 @@ func execErr(err error) {
 	}
 }
 
-// build conf struct by unmarshaling json config
 func build(conf *utils.Config) (cmd *exec.Cmd) {
 
 	if conf.JavPath == "java" {
@@ -51,45 +54,98 @@ func build(conf *utils.Config) (cmd *exec.Cmd) {
 	return cmd
 }
 
-// Hook starts JVM instance
-func Hook(conf *utils.Config) {
+// Executes command sent to sever
+func execute(s string, stdin io.WriteCloser) {
+	stdin.Write([]byte(s))
+}
 
-	Con := make(chan string, 10)
-	Stat := make(chan int, conf.WarnCount)
+func recSout(Sout chan<- string,
+	Stat chan int,
+	Rem chan int,
+	hook *procHook) {
 
-	for {
+	scanner := bufio.NewScanner(hook.reader)
+	for scanner.Scan() {
 
-		cmd := build(conf)
+		// TODO - Move detect strings to own func
+		if strings.Contains(scanner.Text(), "For help, type") {
+			msg := utils.FormatLog("Started Torch ticker")
+			fmt.Print(msg)
+			InitTicker(hook.conf.Interval, hook.conf.WarnCount, Stat, Rem)
+			Stat <- 0
+		}
+		Sout <- scanner.Text()
+	}
+}
 
-		err := cmd.Start()
-		execErr(err)
+// Listen takes pointer to process struct and listens on standard pipes, and on channels comming from ticker
+func Listen(hook *procHook,
+	Sout chan string,
+	Stat chan int,
+	Rem chan int) {
 
-		stdout, err := cmd.StdoutPipe()
-		execErr(err)
+	Brk := make(chan bool)
 
-		stdin, err := cmd.StdinPipe()
-		execErr(err)
+	go recSout(Sout, Stat, Rem, hook)
 
-		reader := bufio.NewReader(stdout)
-
-		Listen(cmd, conf.Interval, conf.WarnCount, Con, Stat, reader)
-
-		for data := range Con {
-			fmt.Println(data)
+	go func(Stat, Rem chan int, Brk chan bool, stdin io.WriteCloser) {
+		for {
 			select {
 			case S := <-Stat:
-				println(S)
 				if S == 1 {
-					msg := utils.FormatWarn(T)
-					stdin.Write(msg)
-					println("here1", S)
+					R := <-Rem
+					msg := utils.FormatWarn(R)
+					hook.stdin.Write(msg)
 				} else if S == 2 {
-					stdin.Write([]byte("\x73\x74\x6f\x70\n"))
+					hook.stdin.Write([]byte("\x73\x74\x6f\x70\n"))
+					Brk <- true
+					return
 				}
 			default:
 				continue
 			}
 		}
-		cmd.Wait()
+	}(Stat, Rem, Brk, hook.stdin)
+
+	for s := range Sout {
+		fmt.Println(s)
+		select {
+		case <-Brk:
+			return
+		default:
+			continue
+		}
 	}
+	// Brk <- false
+}
+
+// Hook starts JVM instance and listener/ticker
+func Hook(conf *utils.Config) {
+
+	var hook procHook
+	var err error
+
+	Sout := make(chan string, 10)
+	Stat := make(chan int, 2)
+	Rem := make(chan int, 2)
+
+	hook.conf = *conf
+
+	hook.cmd = build(&hook.conf)
+
+	hook.stdout, err = hook.cmd.StdoutPipe()
+	execErr(err)
+
+	hook.stdin, err = hook.cmd.StdinPipe()
+	execErr(err)
+
+	hook.reader = bufio.NewReader(hook.stdout)
+	err = hook.cmd.Start()
+	execErr(err)
+
+	Listen(&hook, Sout, Stat, Rem)
+	hook.cmd.Wait()
+	time.Sleep(5 * time.Second)
+	Stat <- 0
+
 }

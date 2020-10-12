@@ -35,16 +35,19 @@ _|_  _  ._ _ |_  | A simple server restart utility - Ver %v
 func FormatWarn(T int) []byte {
 
 	var s string
+	var m string
 
-	switch {
-	case T >= 60:
+	print("IN FORMATTER:", T, "\n")
+	if T >= 60 {
 		T = T / 60
 		s = "minute(s)"
-	default:
+		m = fmt.Sprintf("\x73\x61\x79\x20%v %v %v until restart\n", constamp, T, s)
+	} else if T == 0 {
+		m = fmt.Sprintf("\x73\x61\x79\x20%v Server is restarting now\n", constamp)
+	} else {
 		s = "seconds"
+		m = fmt.Sprintf("\x73\x61\x79\x20%v %v %v until restart\n", constamp, T, s)
 	}
-
-	m := fmt.Sprintf("\x73\x61\x79\x20%v %v %v until restart\n", constamp, T, s)
 
 	return []byte(m)
 }
