@@ -84,11 +84,11 @@ func Listen(hook *procHook,
 	Stat chan int,
 	Rem chan int) {
 
-	Brk := make(chan bool)
+	//Brk := make(chan bool)
 
 	go recSout(Sout, Stat, Rem, hook)
 
-	go func(Stat, Rem chan int, Brk chan bool, stdin io.WriteCloser) {
+	go func(Stat, Rem chan int, stdin io.WriteCloser) {
 		for {
 			select {
 			case S := <-Stat:
@@ -98,22 +98,25 @@ func Listen(hook *procHook,
 					hook.stdin.Write(msg)
 				} else if S == 2 {
 					hook.stdin.Write([]byte("\x73\x74\x6f\x70\n"))
-					Brk <- true
-					return
+					//Brk <- true
+					break
 				}
+			case out := <-Sout:
+				fmt.Println(out)
 			}
-		}
-	}(Stat, Rem, Brk, hook.stdin)
 
-	for s := range Sout {
-		fmt.Println(s)
-		select {
-		case <-Brk:
-			return
-		default:
-			continue
 		}
-	}
+	}(Stat, Rem, hook.stdin)
+
+	// for s := range Sout {
+	// 	fmt.Println(s)
+	// 	select {
+	// 	case <-Brk:
+	// 		return
+	// 	default:
+	// 		continue
+	// 	}
+	// }
 	// Brk <- false
 }
 
