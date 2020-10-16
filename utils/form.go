@@ -37,7 +37,6 @@ func FormatWarn(T int) []byte {
 	var s string
 	var m string
 
-	print("IN FORMATTER:", T, "\n")
 	if T >= 60 {
 		T = T / 60
 		s = "minute(s)"

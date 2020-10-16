@@ -101,8 +101,6 @@ func Listen(hook *procHook,
 					Brk <- true
 					return
 				}
-			default:
-				continue
 			}
 		}
 	}(Stat, Rem, Brk, hook.stdin)

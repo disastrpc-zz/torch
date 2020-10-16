@@ -15,11 +15,9 @@ func InitTicker(interval int, warnCount int, Stat, Rem chan<- int) {
 	var warnArr []int = getWarnTimes(S, I, warnCount)
 	var ticker *time.Ticker = time.NewTicker(1 * time.Second)
 
-	print("WARN COUNT:", warnCount, "\n")
 	go func(Stat, Rem chan<- int) {
 		for {
 			<-ticker.C
-			print("tick\n")
 			C = int(time.Now().Unix())
 			q := sort.Search(len(warnArr), func(q int) bool { return warnArr[q] >= C })
 
@@ -30,7 +28,6 @@ func InitTicker(interval int, warnCount int, Stat, Rem chan<- int) {
 			} else if q < len(warnArr) && warnArr[q] == C {
 				warnCount--
 				fmt.Printf("%v\n", warnArr)
-				print("WC: ", (I * warnCount), "\n")
 				Rem <- (I * warnCount)
 				Stat <- 1
 			}
