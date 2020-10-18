@@ -5,32 +5,24 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
-	"strings"
-	"time"
+	"torch/tui"
 	"torch/utils"
 
-	"github.com/rivo/tview"
+	"github.com/gdamore/tcell/v2"
 )
-
-const refreshInterval = 1 * time.Second
 
 type procHook struct {
 	cmd    *exec.Cmd
+	view   *tui.Tui
 	stdin  io.WriteCloser
 	stdout io.ReadCloser
 	reader io.Reader
 	conf   utils.Config
 }
 
-var (
-	view *tview.Modal
-	proc *tview.Application
-)
-
-func execErr(err error) {
-	if err != nil {
-		panic(err)
-	}
+// Executes command sent to sever
+func execute(s string, stdin io.WriteCloser) {
+	stdin.Write([]byte(s))
 }
 
 func build(conf *utils.Config) (cmd *exec.Cmd) {
@@ -54,70 +46,19 @@ func build(conf *utils.Config) (cmd *exec.Cmd) {
 	return cmd
 }
 
-// Executes command sent to sever
-func execute(s string, stdin io.WriteCloser) {
-	stdin.Write([]byte(s))
-}
+func initHook(hook *procHook, conf *utils.Config, Stat chan int) {
+	var err error
 
-func recSout(Sout chan<- string,
-	Stat chan int,
-	Rem chan int,
-	hook *procHook) {
+	// Setup hook struct values
+	hook.conf = *conf
+	hook.cmd = build(&hook.conf)
 
-	scanner := bufio.NewScanner(hook.reader)
-	for scanner.Scan() {
-
-		// TODO - Move detect strings to own func
-		if strings.Contains(scanner.Text(), "For help, type") {
-			msg := utils.FormatLog("Started Torch ticker")
-			fmt.Print(msg)
-			InitTicker(hook.conf.Interval, hook.conf.WarnCount, Stat, Rem)
-			Stat <- 0
-		}
-		Sout <- scanner.Text()
-	}
-}
-
-// Listen takes pointer to process struct and listens on standard pipes, and on channels comming from ticker
-func Listen(hook *procHook,
-	Sout chan string,
-	Stat chan int,
-	Rem chan int) {
-
-	//Brk := make(chan bool)
-
-	go recSout(Sout, Stat, Rem, hook)
-
-	go func(Stat, Rem chan int, stdin io.WriteCloser) {
-		for {
-			select {
-			case S := <-Stat:
-				if S == 1 {
-					R := <-Rem
-					msg := utils.FormatWarn(R)
-					hook.stdin.Write(msg)
-				} else if S == 2 {
-					hook.stdin.Write([]byte("\x73\x74\x6f\x70\n"))
-					//Brk <- true
-					break
-				}
-			case out := <-Sout:
-				fmt.Println(out)
-			}
-
-		}
-	}(Stat, Rem, hook.stdin)
-
-	// for s := range Sout {
-	// 	fmt.Println(s)
-	// 	select {
-	// 	case <-Brk:
-	// 		return
-	// 	default:
-	// 		continue
-	// 	}
-	// }
-	// Brk <- false
+	// Setup pipes and reader, start server and listen on channels
+	hook.stdout, err = hook.cmd.StdoutPipe()
+	execErr(err)
+	hook.stdin, err = hook.cmd.StdinPipe()
+	execErr(err)
+	hook.reader = bufio.NewReader(hook.stdout)
 }
 
 // Hook starts JVM instance and listener/ticker
@@ -129,24 +70,51 @@ func Hook(conf *utils.Config) {
 	Sout := make(chan string, 10)
 	Stat := make(chan int, 2)
 	Rem := make(chan int, 2)
+	stop := make(chan bool, 2)
 
-	hook.conf = *conf
+	hook.view = tui.Init()
 
-	hook.cmd = build(&hook.conf)
+	hook.view.In.SetDoneFunc(func(key tcell.Key) {
+		if key == tcell.KeyEnter {
+			cmd := hook.view.In.GetText()
 
-	hook.stdout, err = hook.cmd.StdoutPipe()
-	execErr(err)
+			if cmd == "stop" {
+				hook.stdin.Write([]byte(cmd + "\n"))
+				hook.view.In.SetText("")
+				fmt.Fprintf(hook.view.Tv, "%v", utils.FormatConsole("Stopping Torch"))
+				stop <- true
+			}
 
-	hook.stdin, err = hook.cmd.StdinPipe()
-	execErr(err)
+			hook.stdin.Write([]byte(cmd + "\n"))
+			hook.view.In.SetText("")
 
-	hook.reader = bufio.NewReader(hook.stdout)
-	err = hook.cmd.Start()
-	execErr(err)
+		}
+	})
 
-	Listen(&hook, Sout, Stat, Rem)
-	hook.cmd.Wait()
-	time.Sleep(5 * time.Second)
-	Stat <- 0
+	go hook.view.App.SetRoot(hook.view.Flx, true).Run()
+
+	initHook(&hook, conf, Stat)
+	fmt.Fprintf(hook.view.Tv, "%v\n", utils.Banner(&hook.conf))
+	for {
+		select {
+		case s := <-stop:
+			if s {
+				hook.cmd.Wait()
+				hook.view.App.Stop()
+				return
+			}
+		default:
+			err = hook.cmd.Start()
+			execErr(err)
+
+			hook.Listen(Sout, Stat, Rem)
+
+			msg := utils.FormatLog("Starting JVM")
+
+			fmt.Fprintf(hook.view.Tv, "%v", msg)
+
+			hook.cmd.Wait()
+		}
+	}
 
 }

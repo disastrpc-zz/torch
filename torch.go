@@ -49,12 +49,6 @@ func main() {
 		jvmargs,
 		interval)
 
-	fmt.Println(utils.Banner(conf))
-	msg := utils.FormatLog("Starting JVM")
-	fmt.Print(msg)
-
-	for {
-		proc.Hook(conf)
-	}
+	proc.Hook(conf)
 
 }
