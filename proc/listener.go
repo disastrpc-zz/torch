@@ -15,6 +15,8 @@ func execErr(err error) {
 	}
 }
 
+// recStout receives all output from server on stdout and pipes it through the Sout chan, this is received by the Listen function
+// which handles the output
 func (hook *procHook) recSout(Sout chan<- string,
 	Stat chan int,
 	Rem chan int) {

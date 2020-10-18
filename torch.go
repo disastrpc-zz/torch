@@ -1,4 +1,7 @@
-// Use struct of channels or a channel transmitting an interface to communicate server status to handler
+//                 GNU GENERAL PUBLIC LICENSE
+// 					Version 3, 29 June 2007
+// 			Torch - A simple server restart utility written in Go
+// 				by disastrpc @ github.com/disastrpc
 
 package main
 

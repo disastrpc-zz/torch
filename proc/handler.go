@@ -46,6 +46,7 @@ func build(conf *utils.Config) (cmd *exec.Cmd) {
 	return cmd
 }
 
+// Set all hook properties
 func initHook(hook *procHook, conf *utils.Config, Stat chan int) {
 	var err error
 
@@ -74,6 +75,8 @@ func Hook(conf *utils.Config) {
 
 	hook.view = tui.Init()
 
+	// Capture input from InputField and write to stdin.
+	// If command executed is stop program will enter shutdown routine.
 	hook.view.In.SetDoneFunc(func(key tcell.Key) {
 		if key == tcell.KeyEnter {
 			cmd := hook.view.In.GetText()
@@ -81,7 +84,7 @@ func Hook(conf *utils.Config) {
 			if cmd == "stop" {
 				hook.stdin.Write([]byte(cmd + "\n"))
 				hook.view.In.SetText("")
-				fmt.Fprintf(hook.view.Tv, "%v", utils.FormatConsole("Stopping Torch"))
+				fmt.Fprintf(hook.view.Tv, "%v", string(utils.FormatConsole("Stopping Torch")))
 				stop <- true
 			}
 
@@ -94,7 +97,9 @@ func Hook(conf *utils.Config) {
 	go hook.view.App.SetRoot(hook.view.Flx, true).Run()
 
 	initHook(&hook, conf, Stat)
+
 	fmt.Fprintf(hook.view.Tv, "%v\n", utils.Banner(&hook.conf))
+
 	for {
 		select {
 		case s := <-stop:
