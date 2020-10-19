@@ -53,6 +53,7 @@ An empty configuration file is provided in the repo, but one can also be created
 - `warncount`: Number of warnings that will be issued before restarting server.
 - `warnmsg`: Warning message to display. Not implemented.
 - `rebootmsg`: Message to display before restarting. Not implemented.
+- `showbanner`: Should startup banner be showed? (true/false)
 
 ## Command Line Arguments
 
