@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-var ver string = "0.0.1"
+const ver string = "0.1.2"
 
 var constamp string = "\x5b\x54\x6f\x72\x63\x68\x2f\x49\x6e\x66\x6f\x5d"
 var wrapstamp string = "\x5b\x57\x72\x61\x70\x70\x65\x72\x2f\x47\x6f\x72\x6f\x75\x74\x69\x6e\x65\x5d"
@@ -23,10 +23,10 @@ func Banner(conf *Config) string {
 _|_  _  ._ _ |_  | A simple server restart utility - Ver %v
  |_ (_) | (_ | | | by disastrpc @ https://github.com/disastrpc/torch
 -----------------|----------------------------------------------------
-[Λ] Java path	: %v
-[Λ] Server jar	: %v
-[Λ] Arguments	: %v
-[Λ] Interval	: %d secs
+[Λ] Java path: %v
+[Λ] Server jar: %v
+[Λ] Arguments: %v
+[Λ] Interval: %d secs
 `, ver, conf.JavPath, conf.JarFile, conf.JvmArgs[0:len(conf.JvmArgs)], conf.Interval)
 
 	return banner

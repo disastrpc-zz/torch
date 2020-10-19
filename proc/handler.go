@@ -51,7 +51,7 @@ func initHook(hook *procHook, conf *utils.Config, Stat chan int) {
 	var err error
 
 	// Setup hook struct values
-	hook.conf = *conf
+
 	hook.cmd = build(&hook.conf)
 
 	// Setup pipes and reader, start server and listen on channels
@@ -96,11 +96,12 @@ func Hook(conf *utils.Config) {
 
 	go hook.view.App.SetRoot(hook.view.Flx, true).Run()
 
-	initHook(&hook, conf, Stat)
+	hook.conf = *conf
 
 	fmt.Fprintf(hook.view.Tv, "%v\n", utils.Banner(&hook.conf))
 
 	for {
+		initHook(&hook, conf, Stat)
 		select {
 		case s := <-stop:
 			if s {

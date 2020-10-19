@@ -22,8 +22,7 @@ func Init() (view *Tui) {
 	tv := initText(app)
 	flx := initFlex(in, tv)
 
-	tv.SetBackgroundColor(696969).
-		SetBorder(true)
+	tv.SetBackgroundColor(696969)
 
 	in.SetLabelColor(377369)
 
@@ -40,10 +39,9 @@ func Init() (view *Tui) {
 // InitInput returns InputField primitive
 func initInput() *cview.InputField {
 	return cview.NewInputField().
-		SetLabel("λ").
 		SetPlaceholder(" server command").
 		SetFieldWidth(0).
-		SetFieldBackgroundColor(696969)
+		SetFieldBackgroundColor(323232)
 }
 
 // InitText returns TextView primitive
