@@ -3,7 +3,7 @@
 ![issues](https://img.shields.io/github/issues/disastrpc/torch?color=yellow&style=flat-square)
 
 # Torch
-## A Minecraft Server Wrapper Written in Go
+## A Minecraft restart utility written in Go
 
 ![prog](misc/example.gif)
 
