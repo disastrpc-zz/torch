@@ -5,7 +5,7 @@
 # Torch
 ## A Minecraft Server Wrapper Written in Go
 
-![prog](misc/img1.png)
+![prog](misc/example.gif)
 
 ## Dear god why?
 
