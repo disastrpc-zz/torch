@@ -13,13 +13,14 @@ import (
 
 // Config represents the configuration settings for Torch.
 type Config struct {
-	JavPath   string
-	JvmArgs   []string
-	JarFile   string
-	Interval  int
-	WarnCount int
-	WarnMsg   string
-	RebootMsg string
+	JavPath    string
+	JvmArgs    []string
+	JarFile    string
+	Interval   int
+	WarnCount  int
+	WarnMsg    string
+	RebootMsg  string
+	ShowBanner bool
 }
 
 //ParseConfig reads config file and returns reference to Config structure. Parameters are used to overwrite file values with command line args.

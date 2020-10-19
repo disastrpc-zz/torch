@@ -11,6 +11,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
+// Represents a hooked process including its Cmd struct, UI elements, pipes, configuration settings and reader object
 type procHook struct {
 	cmd    *exec.Cmd
 	view   *tui.Tui
@@ -84,7 +85,7 @@ func Hook(conf *utils.Config) {
 			if cmd == "stop" {
 				hook.stdin.Write([]byte(cmd + "\n"))
 				hook.view.In.SetText("")
-				fmt.Fprintf(hook.view.Tv, "%v", string(utils.FormatConsole("Stopping Torch")))
+				fmt.Fprintf(hook.view.Tv, "%v", string(utils.FormatLog("Stopping Torch")))
 				stop <- true
 			}
 
@@ -94,11 +95,13 @@ func Hook(conf *utils.Config) {
 		}
 	})
 
+	// Set Flex as App root
 	go hook.view.App.SetRoot(hook.view.Flx, true).Run()
-
 	hook.conf = *conf
 
-	fmt.Fprintf(hook.view.Tv, "%v\n", utils.Banner(&hook.conf))
+	if hook.conf.ShowBanner {
+		fmt.Fprintf(hook.view.Tv, "%v\n", utils.Banner(&hook.conf))
+	}
 
 	for {
 		initHook(&hook, conf, Stat)
