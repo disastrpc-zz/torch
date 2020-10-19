@@ -97,8 +97,8 @@ func Hook(conf *utils.Config) {
 
 	// Set Flex as App root
 	go hook.view.App.SetRoot(hook.view.Flx, true).Run()
-	hook.conf = *conf
 
+	hook.conf = *conf
 	if hook.conf.ShowBanner {
 		fmt.Fprintf(hook.view.Tv, "%v\n", utils.Banner(&hook.conf))
 	}

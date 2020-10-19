@@ -9,12 +9,13 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 )
 
 // Config represents the configuration settings for Torch.
 type Config struct {
 	JavPath    string
-	JvmArgs    []string
+	JvmArgs    string
 	JarFile    string
 	Interval   int
 	WarnCount  int
@@ -52,10 +53,6 @@ func ParseConfig(javpath, jarfile *string, jvmargs *[]string, interval *int) *Co
 		conf.JarFile = *jarfile
 	}
 
-	if len(*jvmargs) != 0 {
-		conf.JvmArgs = *jvmargs
-	}
-
 	if *interval != 0 {
 		conf.Interval = *interval
 	}
@@ -75,8 +72,9 @@ func Unpack(c *Config) (args []string) {
 
 		switch {
 		case v.Type().Field(i).Name == "JvmArgs":
-			for a := 0; a < len(c.JvmArgs); a++ {
-				args = append(args, c.JvmArgs[a])
+			arglst := strings.Split(c.JvmArgs, " ")
+			for a := 0; a < len(arglst); a++ {
+				args = append(args, arglst[a])
 			}
 		case v.Type().Field(i).Name == "JarFile":
 			args = append(args, ("\x2d\x6a\x61\x72"))
