@@ -40,6 +40,8 @@ go build
 
 # Usage
 
+Simply place the torch binary and the torch.conf file inside your Minecraft server folder and setup the configuration values to your server which are explained below. The Torch binary can be run by double clicking it or running it from the command line. 
+
 ## Configuration File - torch.conf
 
 An empty configuration file is provided in the repo, but one can also be created. The layout is in JSON format with the following options:
