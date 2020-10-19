@@ -2,7 +2,8 @@
 ![license](https://img.shields.io/github/license/disastrpc/torch?color=blue&style=flat-square)
 ![issues](https://img.shields.io/github/issues/disastrpc/torch?color=yellow&style=flat-square)
 
-# Torch - A Minecraft Server Wrapper Written in Go
+# Torch
+## A Minecraft Server Wrapper Written in Go
 
 ![prog](misc/img1.png)
 
