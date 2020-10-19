@@ -1,4 +1,4 @@
-![release](https://img.shields.io/github/v/release/disastrpc/torch?color=green&style=flat-square)
+![release](https://img.shields.io/github/v/release/disastrpc/torch?color=darkgreen&style=flat-square)
 ![license](https://img.shields.io/github/license/disastrpc/torch?color=blue&style=flat-square)
 ![issues](https://img.shields.io/github/issues/disastrpc/torch?color=yellow&style=flat-square)
 
