@@ -69,7 +69,7 @@ func Hook(conf *utils.Config) {
 	var hook procHook
 	var err error
 
-	Sout := make(chan string, 100)
+	Sout := make(chan string, 1000)
 	Stat := make(chan int, 2)
 	Rem := make(chan int, 2)
 	stop := make(chan bool, 2)
