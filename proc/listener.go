@@ -29,7 +29,7 @@ func (hook *procHook) recSout(Sout chan<- string,
 			msg := utils.FormatLog("Started Torch ticker")
 			fmt.Fprintf(hook.view.Tv, "%v", msg)
 			go InitTicker(hook.conf.Interval, hook.conf.WarnCount, Stat, Rem)
-		} else if strings.HasPrefix(scanner.Text(), "at") {
+		} else if strings.HasPrefix(scanner.Text(), "        at") {
 			continue
 		}
 		Sout <- scanner.Text()

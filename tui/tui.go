@@ -1,8 +1,6 @@
 package tui
 
 import (
-	"time"
-
 	"gitlab.com/tslocum/cview"
 )
 
@@ -51,7 +49,6 @@ func initText(app *cview.Application) *cview.TextView {
 	return cview.NewTextView().
 		SetScrollable(true).
 		SetChangedFunc(func() {
-			time.Sleep(5 * time.Millisecond)
 			app.Draw()
 		})
 }
