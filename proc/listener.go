@@ -25,7 +25,7 @@ func (hook *procHook) recSout(Sout chan<- string,
 	for scanner.Scan() {
 
 		// TODO - Move detect strings to own func
-		if strings.Contains(scanner.Text(), "Preparing spawn area: 100%") {
+		if strings.Contains(scanner.Text(), "Time elapsed: ") {
 			msg := utils.FormatLog("Started Torch ticker")
 			fmt.Fprintf(hook.view.Tv, "%v", msg)
 			go InitTicker(hook.conf.Interval, hook.conf.WarnCount, Stat, Rem)
